@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -219,7 +220,6 @@ namespace DiscountSimulate
 
                 if (!vaildDiscountColl.Any()) {
                     discountPaths.Add(currPath);
-                    Console.WriteLine("branch completed.");
                 }
             }
             else {
@@ -233,6 +233,9 @@ namespace DiscountSimulate
         /// <returns></returns>
         private static List<Discount> GetBestDiscountPath(List<Product> basket, List<Discount> availableDiscounts)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Reset();
+            sw.Start();
             List<List<Discount>> discountPaths = new List<List<Discount>>();
             List<Discount> bestDiscountPath = new List<Discount>();
 
@@ -252,7 +255,14 @@ namespace DiscountSimulate
             });
 
             bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
+            sw.Stop();
 
+            TimeSpan timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            string answer = string.Format("{0:D2}h-{1:D2}m-{2:D2}s-{3:D3}ms",
+                                    timeSpan.Hours,
+                                    timeSpan.Minutes,
+                                    timeSpan.Seconds,
+                                    timeSpan.Milliseconds);
             return bestDiscountPath;
         }
     }
