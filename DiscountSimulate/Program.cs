@@ -27,18 +27,18 @@ namespace DiscountSimulate
             Product pBB = new Product { Name = "BB", Price = 150 };
             Product pCC = new Product { Name = "CC", Price = 200 };
 
-            List<Product> basket = new List<Product> { pA, pB, pC, pC, pC, pC };
-            //basket = AddNumsOfProductToBasket(basket, pA, 66);
-            //basket = AddNumsOfProductToBasket(basket, pB, 74);
-            //basket = AddNumsOfProductToBasket(basket, pC, 22);
-            //basket = AddNumsOfProductToBasket(basket, pD, 15);
-            //basket = AddNumsOfProductToBasket(basket, pE, 16);
-            //basket = AddNumsOfProductToBasket(basket, pF, 56);
-            //basket = AddNumsOfProductToBasket(basket, pG, 87);
-            //basket = AddNumsOfProductToBasket(basket, pH, 32);
-            //basket = AddNumsOfProductToBasket(basket, pI, 38);
-            //basket = AddNumsOfProductToBasket(basket, pJ, 13);
-            //basket = AddNumsOfProductToBasket(basket, pK, 42);
+            List<Product> basket = new List<Product> { pA, pB, pC, pC, pC };
+            //basket = AddNumsOfProductToBasket(basket, pA, 5);
+            //basket = AddNumsOfProductToBasket(basket, pB, 6);
+            //basket = AddNumsOfProductToBasket(basket, pC, 7);
+            basket = AddNumsOfProductToBasket(basket, pD, 1);
+            basket = AddNumsOfProductToBasket(basket, pE, 2);
+            basket = AddNumsOfProductToBasket(basket, pF, 3);
+            //basket = AddNumsOfProductToBasket(basket, pG, 1);
+            //basket = AddNumsOfProductToBasket(basket, pH, 2);
+            //basket = AddNumsOfProductToBasket(basket, pI, 3);
+            //basket = AddNumsOfProductToBasket(basket, pJ, 1);
+            //basket = AddNumsOfProductToBasket(basket, pK, 2);
             //basket = AddNumsOfProductToBasket(basket, pAA, 55);
             //basket = AddNumsOfProductToBasket(basket, pBB, 78);
             //basket = AddNumsOfProductToBasket(basket, pCC, 87);
@@ -75,24 +75,26 @@ namespace DiscountSimulate
             discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pG, pI, pK }));
             discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pH, pJ }));
             discountRules.Add(new SingleProductPercentDiscount(0.96, new List<Product> { pI, pJ, pK }));
-            discountRules.Add(new BuyOneGetOneFree(new List<Product> { pG }));
+            //discountRules.Add(new BuyOneGetOneFree(new List<Product> { pG }));
             discountRules.Add(new BuyTwoGetOneFree(new List<Product> { pC }));
-            discountRules.Add(new FreeUpdate(pA, pAA));
-            discountRules.Add(new FreeUpdate(pB, pBB));
-            discountRules.Add(new FreeUpdate(pC, pCC));
-            //discountRules.Add(new BuyAGetBFree(pI, pJ));
-            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pA, pB }, 0.75));
-            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pA, pB }, 200));
+            //discountRules.Add(new FreeUpdate(pA, pAA));
+            //discountRules.Add(new FreeUpdate(pB, pBB));
+            //discountRules.Add(new FreeUpdate(pC, pCC));
+            ////discountRules.Add(new BuyAGetBFree(pI, pJ));
+            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pA, pB }, 0.75));
+            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pA, pB }, 200));
             //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB }, 5));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
-            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pB, pD }, 250));
-            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pB, pC, pD }, 0.65));
+            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pB, pD }, 250));
+            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pB, pC, pD }, 0.65));
 
-            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD }, 0.7));
-            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pI, pJ, pH }, 200));
-            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pG, pAA }, 105));
-            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pE, pH }, 120));
-            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pF, pH, pK }, 0.95));
+            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD }, 0.7));
+            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pI, pJ, pH }, 200));
+            //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pG, pAA }, 105));
+            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pE, pH }, 120));
+            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pF, pH, pK }, 0.95));
+
+            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
 
             List<Discount> vaildDiscountColl = new List<Discount>();
             foreach (var rule in discountRules) {
@@ -204,18 +206,25 @@ namespace DiscountSimulate
         /// <param name="availableDiscounts"></param>
         /// <param name="currPath"></param>
         /// <returns>單一路徑</returns>
-        private static List<Discount> ExpanseAll(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath)
+        private static void ExpanseAll(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, List<List<Discount>> discountPaths)
         {
             if (availableProducts.Any() && availableDiscounts.Any()) {
                 var vaildDiscountColl = ValidateDiscounts(availableProducts, availableDiscounts);
                 foreach (var d in vaildDiscountColl) {
-                    currPath.Add(d);
+                    var nxtPath = currPath.Clone().ToList();
+                    nxtPath.Add(d);
                     var restProductColl = RemoveUsedProducts(availableProducts, d);
-                    return ExpanseAll(restProductColl.Clone().ToList(), vaildDiscountColl.Clone().ToList(), currPath);
+                    ExpanseAll(restProductColl, vaildDiscountColl.Clone().ToList(), nxtPath, discountPaths);
+                }
+
+                if (!vaildDiscountColl.Any()) {
+                    discountPaths.Add(currPath);
+                    Console.WriteLine("branch completed.");
                 }
             }
-
-            return currPath;
+            else {
+                discountPaths.Add(currPath);
+            }
         }
 
         /// <summary>全展開最佳</summary>
@@ -232,8 +241,8 @@ namespace DiscountSimulate
                 List<Discount> currPath = new List<Discount>();
                 currPath.Add(d);
                 var restProducts = RemoveUsedProducts(basket, d);
-                currPath = ExpanseAll(restProducts.Clone().ToList(), availableDiscounts.Clone().ToList(), currPath);
-                discountPaths.Add(currPath);
+                ExpanseAll(restProducts, vaildDiscounts, currPath, discountPaths);
+                Console.WriteLine("discount completed.");
             }
 
             var performanceSet = discountPaths.Select(dp => new
