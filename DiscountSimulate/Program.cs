@@ -35,7 +35,7 @@ namespace DiscountSimulate
             basket = AddNumsOfProductToBasket(basket, pD, 1);
             basket = AddNumsOfProductToBasket(basket, pE, 2);
             basket = AddNumsOfProductToBasket(basket, pF, 3);
-            //basket = AddNumsOfProductToBasket(basket, pG, 1);
+            basket = AddNumsOfProductToBasket(basket, pG, 1);
             //basket = AddNumsOfProductToBasket(basket, pH, 2);
             //basket = AddNumsOfProductToBasket(basket, pI, 3);
             //basket = AddNumsOfProductToBasket(basket, pJ, 1);
@@ -73,8 +73,8 @@ namespace DiscountSimulate
             #endregion
 
             List<IDiscountRule> discountRules = new List<IDiscountRule>();
-            discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pG, pI, pK }));
-            discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pH, pJ }));
+            discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pI, pK }));
+            discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pG, pH, pJ }));
             discountRules.Add(new SingleProductPercentDiscount(0.96, new List<Product> { pI, pJ, pK }));
             //discountRules.Add(new BuyOneGetOneFree(new List<Product> { pG }));
             discountRules.Add(new BuyTwoGetOneFree(new List<Product> { pC }));
@@ -207,7 +207,7 @@ namespace DiscountSimulate
         /// <param name="availableDiscounts"></param>
         /// <param name="currPath"></param>
         /// <returns>單一路徑</returns>
-        private static void ExpanseAll(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, List<List<Discount>> discountPaths)
+        private static void ExpanseAll(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, Dictionary<string, List<Discount>> discountPaths)
         {
             if (availableProducts.Any() && availableDiscounts.Any()) {
                 var vaildDiscountColl = ValidateDiscounts(availableProducts, availableDiscounts);
@@ -219,11 +219,13 @@ namespace DiscountSimulate
                 }
 
                 if (!vaildDiscountColl.Any()) {
-                    discountPaths.Add(currPath);
+                    currPath.OrderBy(p => p.Name);
+                    discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
                 }
             }
             else {
-                discountPaths.Add(currPath);
+                currPath.OrderBy(p => p.Name);
+                discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
             }
         }
 
@@ -236,22 +238,30 @@ namespace DiscountSimulate
             Stopwatch sw = new Stopwatch();
             sw.Reset();
             sw.Start();
-            List<List<Discount>> discountPaths = new List<List<Discount>>();
+            Dictionary<string, List<Discount>> discountPaths = new Dictionary<string, List<Discount>>();
             List<Discount> bestDiscountPath = new List<Discount>();
 
             var vaildDiscounts = ValidateDiscounts(basket, availableDiscounts);
-            foreach (var d in vaildDiscounts) {
-                List<Discount> currPath = new List<Discount>();
-                currPath.Add(d);
-                var restProducts = RemoveUsedProducts(basket, d);
-                ExpanseAll(restProducts, vaildDiscounts, currPath, discountPaths);
-                Console.WriteLine("discount completed.");
+            List<Discount> entryColl = vaildDiscounts.Clone().ToList();
+            while (entryColl.Any()) {
+                var dX = entryColl.FirstOrDefault();
+                if (dX != null) {
+                    List<Discount> currPath = new List<Discount>();
+                    currPath.Add(dX);
+                    var restProducts = RemoveUsedProducts(basket, dX);
+                    ExpanseAll(restProducts, vaildDiscounts, currPath, discountPaths);
+                    Console.WriteLine("discount completed.");
+                }
+
+                if (discountPaths.Any()) {
+                    entryColl = vaildDiscounts.Where(dd => !discountPaths.Values.SelectMany(p => p).Select(p => p.Name).Contains(dd.Name)).ToList();
+                }
             }
 
             var performanceSet = discountPaths.Select(dp => new
             {
-                DiscountPath = dp,
-                TotalDiscountAmount = dp.Sum(d => d.Amount)
+                DiscountPath = dp.Value,
+                TotalDiscountAmount = dp.Value.Sum(d => d.Amount)
             });
 
             bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
