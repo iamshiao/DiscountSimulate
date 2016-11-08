@@ -85,7 +85,7 @@ namespace DiscountSimulate
             //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pA, pB }, 0.75));
             //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pA, pB }, 200));
             //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB }, 5));
-            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
+            //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
             //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pB, pD }, 250));
             //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pB, pC, pD }, 0.65));
 
@@ -96,6 +96,7 @@ namespace DiscountSimulate
             //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pF, pH, pK }, 0.95));
 
             discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
 
             List<Discount> vaildDiscountColl = new List<Discount>();
             foreach (var rule in discountRules) {
@@ -219,12 +220,12 @@ namespace DiscountSimulate
                 }
 
                 if (!vaildDiscountColl.Any()) {
-                    currPath.OrderBy(p => p.Name);
+                    currPath = currPath.OrderBy(p => p.Name).ToList();
                     discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
                 }
             }
             else {
-                currPath.OrderBy(p => p.Name);
+                currPath = currPath.OrderBy(p => p.Name).ToList();
                 discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
             }
         }
@@ -242,19 +243,18 @@ namespace DiscountSimulate
             List<Discount> bestDiscountPath = new List<Discount>();
 
             var vaildDiscounts = ValidateDiscounts(basket, availableDiscounts);
-            List<Discount> entryColl = vaildDiscounts.Clone().ToList();
-            while (entryColl.Any()) {
-                var dX = entryColl.FirstOrDefault();
-                if (dX != null) {
-                    List<Discount> currPath = new List<Discount>();
-                    currPath.Add(dX);
-                    var restProducts = RemoveUsedProducts(basket, dX);
-                    ExpanseAll(restProducts, vaildDiscounts, currPath, discountPaths);
-                    Console.WriteLine("discount completed.");
-                }
+            List<Discount> noneUsedDiscounts = vaildDiscounts.Clone().ToList();
+            while (noneUsedDiscounts.Any()) {
+                var rootOfPath = noneUsedDiscounts.First();
+                List<Discount> currPath = new List<Discount>();
+                currPath.Add(rootOfPath);
+                var restProducts = RemoveUsedProducts(basket, rootOfPath);
+                ExpanseAll(restProducts, vaildDiscounts, currPath, discountPaths);
+                Console.WriteLine("discount completed.");
 
                 if (discountPaths.Any()) {
-                    entryColl = vaildDiscounts.Where(dd => !discountPaths.Values.SelectMany(p => p).Select(p => p.Name).Contains(dd.Name)).ToList();
+                    var discNamesInOneDimension = discountPaths.Values.SelectMany(p => p).Select(p => p.Name).ToList();
+                    noneUsedDiscounts = vaildDiscounts.Where(dd => !discountPaths.Values.SelectMany(p => p).Select(p => p.Name).Contains(dd.Name)).ToList();
                 }
             }
 
