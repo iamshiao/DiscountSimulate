@@ -70,7 +70,7 @@ namespace DiscountSimulate
 
             discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
-            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pF, pG }, 5));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pF, pG }, 160));
 
             List<Discount> vaildDiscounts = new List<Discount>();
             foreach (var rule in discountRules) {
@@ -151,11 +151,28 @@ namespace DiscountSimulate
         {
             if (availableProducts.Any() && availableDiscounts.Any()) {
                 var vaildDiscounts = ValidateDiscounts(availableProducts, availableDiscounts);
-                foreach (var d in vaildDiscounts) {
-                    var nxtPath = currPath.Clone().ToList();
-                    nxtPath.Add(d);
-                    var restProducts = RemoveUsedProducts(availableProducts, d);
-                    ExpanseAll(restProducts, vaildDiscounts.Clone().ToList(), nxtPath, discountPaths);
+                List<Discount> noneExpansedDiscounts = vaildDiscounts.Clone().ToList();
+                if (discountPaths.Any()) {
+                    var discNamesInOneDimension = discountPaths.Values.SelectMany(p => p).Select(p => p.Name).ToList();
+                    noneExpansedDiscounts = vaildDiscounts.Where(discount => !discNamesInOneDimension.Contains(discount.Name)).ToList();
+                }
+                if (noneExpansedDiscounts.Any()) {
+                    foreach (var d in noneExpansedDiscounts) {
+                        var nxtPath = currPath.Clone().ToList();
+                        nxtPath.Add(d);
+                        var restProducts = RemoveUsedProducts(availableProducts, d);
+                        ExpanseAll(restProducts, vaildDiscounts.Clone().ToList(), nxtPath, discountPaths);
+                    }
+                }
+                else {
+                    if (vaildDiscounts.Any()) {
+                        foreach (var d in vaildDiscounts) {
+                            var nxtPath = currPath.Clone().ToList();
+                            nxtPath.Add(d);
+                            var restProducts = RemoveUsedProducts(availableProducts, d);
+                            ExpanseAll(restProducts, vaildDiscounts.Clone().ToList(), nxtPath, discountPaths);
+                        }
+                    }
                 }
 
                 if (!vaildDiscounts.Any()) {
