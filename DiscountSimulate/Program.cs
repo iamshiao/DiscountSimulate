@@ -45,33 +45,6 @@ namespace DiscountSimulate
             //basket = AddNumsOfProductToBasket(basket, pCC, 87);
             #endregion
 
-            #region 折扣
-            //Discount dA = new Discount { Name = "dA", Amount = 50, Combination = new List<Product> { pA } };
-            //Discount dAp75 = new Discount { Name = "dAp75", Amount = pA.Price * 0.25, Combination = new List<Product> { pA } };
-            //Discount dB = new Discount { Name = "dB", Amount = 50, Combination = new List<Product> { pB } };
-            //Discount dC = new Discount { Name = "dC", Amount = 50, Combination = new List<Product> { pC } };
-            //Discount dD = new Discount { Name = "dD", Amount = 50, Combination = new List<Product> { pD } };
-
-            //Discount dABC = new Discount { Name = "dABC", Amount = 174, Combination = new List<Product> { pA, pB, pC } };
-            //Discount dAB = new Discount { Name = "dAB", Amount = 95, Combination = new List<Product> { pA, pB } };
-            //Discount dBC = new Discount { Name = "dBC", Amount = 90, Combination = new List<Product> { pB, pC } };
-            //Discount dAC = new Discount { Name = "dAC", Amount = 90, Combination = new List<Product> { pA, pC } };
-            //Discount dBD = new Discount { Name = "dBD", Amount = 120, Combination = new List<Product> { pB, pD } };
-            //Discount dACD = new Discount { Name = "dACD", Amount = 160, Combination = new List<Product> { pA, pC, pD } };
-            //Discount dCD = new Discount { Name = "dCD", Amount = 110, Combination = new List<Product> { pC, pD } };
-
-            ////Discount dABp75 = new Discount { Amount = (pA.Price + pB.Price) * 0.75, Combination = new List<Product> { pA, pB } }; // 買 A 送 B
-            ////Discount dAB = new Discount { Amount = pB.Price, Combination = new List<Product> { pA, pB } }; // 買 A 送 B
-            //Discount d2A = new Discount { Name = "d2A", Amount = pA.Price, Combination = new List<Product> { pA, pA } }; // 買 A 送 A
-            //Discount d3B = new Discount { Name = "d3B", Amount = pB.Price, Combination = new List<Product> { pB, pB, pB } }; // 買 2B 送 B
-            //Discount d2CD = new Discount { Name = "d2CD", Amount = pD.Price, Combination = new List<Product> { pC, pC, pD } }; // 買 2C 送 D
-
-            //List<Discount> dColl = new List<Discount>();
-            //dColl.AddRange(new List<Discount> { dA, dB, dC, dD, dAp75 });
-            //dColl.AddRange(new List<Discount> { dABC, dAB, dBC, dAC, dBD, dACD, dCD });
-            //dColl.AddRange(new List<Discount> { d2A, d3B, d2CD });
-            #endregion
-
             List<IDiscountRule> discountRules = new List<IDiscountRule>();
             discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pI, pK }));
             discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pG, pH, pJ }));
@@ -97,13 +70,14 @@ namespace DiscountSimulate
 
             discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pF, pG }, 5));
 
-            List<Discount> vaildDiscountColl = new List<Discount>();
+            List<Discount> vaildDiscounts = new List<Discount>();
             foreach (var rule in discountRules) {
-                vaildDiscountColl.AddRange(rule.GetDiscountColl(basket));
+                vaildDiscounts.AddRange(rule.GetDiscounts(basket));
             }
 
-            GetBestDiscountPath(basket, vaildDiscountColl);
+            GetBestDiscountPath(basket, vaildDiscounts);
         }
 
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
@@ -113,41 +87,6 @@ namespace DiscountSimulate
             }
 
             return basket;
-        }
-
-        private static List<Discount> EvalEachBestProfit(List<Product> pColl, List<Discount> dColl)
-        {
-            List<Discount> bestDiscColl = new List<Discount>();
-
-            while (pColl.Any() && dColl.Any()) { // 當折扣或商品組合未用盡則持續尋找折扣
-                List<Discount> bestDiscByProductColl = new List<Discount>(); // 個別商品本輪最佳折扣
-                foreach (var p in pColl) {
-                    double? singleMax = dColl.Where(ele => ele.Combination.Count == 1 && ele.Combination[0].Name == p.Name)
-                        .Max(ele => ele.Amount); // 單品折扣金額
-                    singleMax = singleMax == null ? singleMax : 0;
-                    Discount currBest = null;
-                    var dHasProductColl = dColl.Where(d => d.Combination.Any(ele => ele.Name == p.Name)); // 包含該商品的折扣組合
-                    foreach (var d in dHasProductColl) {
-                        if (d.Distribution >= singleMax && (currBest != null ?
-                            d.Distribution >= currBest.Distribution : true)) {
-                            currBest = d;
-                        }
-                    }
-                    bestDiscByProductColl.Add(currBest);
-                }
-                // 本輪最佳折扣
-                var bestPerLoop = bestDiscByProductColl.OrderByDescending(ele => ele.Distribution).FirstOrDefault();
-                bestDiscColl.Add(bestPerLoop);
-
-                // 移除本輪已耗用的商品組合
-                foreach (var obj in bestPerLoop.Combination) {
-                    pColl.Remove(pColl.FirstOrDefault(p => p.Name == obj.Name));
-                }
-
-                dColl = ValidateDiscounts(pColl, dColl);
-            }
-
-            return bestDiscColl;
         }
 
         /// <summary>移除折扣會耗用的產品</summary>
@@ -211,15 +150,15 @@ namespace DiscountSimulate
         private static void ExpanseAll(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, Dictionary<string, List<Discount>> discountPaths)
         {
             if (availableProducts.Any() && availableDiscounts.Any()) {
-                var vaildDiscountColl = ValidateDiscounts(availableProducts, availableDiscounts);
-                foreach (var d in vaildDiscountColl) {
+                var vaildDiscounts = ValidateDiscounts(availableProducts, availableDiscounts);
+                foreach (var d in vaildDiscounts) {
                     var nxtPath = currPath.Clone().ToList();
                     nxtPath.Add(d);
-                    var restProductColl = RemoveUsedProducts(availableProducts, d);
-                    ExpanseAll(restProductColl, vaildDiscountColl.Clone().ToList(), nxtPath, discountPaths);
+                    var restProducts = RemoveUsedProducts(availableProducts, d);
+                    ExpanseAll(restProducts, vaildDiscounts.Clone().ToList(), nxtPath, discountPaths);
                 }
 
-                if (!vaildDiscountColl.Any()) {
+                if (!vaildDiscounts.Any()) {
                     currPath = currPath.OrderBy(p => p.Name).ToList();
                     discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
                 }
@@ -254,7 +193,7 @@ namespace DiscountSimulate
 
                 if (discountPaths.Any()) {
                     var discNamesInOneDimension = discountPaths.Values.SelectMany(p => p).Select(p => p.Name).ToList();
-                    noneUsedDiscounts = vaildDiscounts.Where(dd => !discountPaths.Values.SelectMany(p => p).Select(p => p.Name).Contains(dd.Name)).ToList();
+                    noneUsedDiscounts = vaildDiscounts.Where(discount => !discNamesInOneDimension.Contains(discount.Name)).ToList();
                 }
             }
 

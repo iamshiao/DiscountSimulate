@@ -19,7 +19,7 @@ namespace DiscountSimulate
 
         public List<Product> Scope { get; set; } = new List<Product>();
 
-        public List<Discount> GetDiscountColl(List<Product> basket)
+        public List<Discount> GetDiscounts(List<Product> basket)
         {
             List<Discount> validDiscountColl = new List<Discount>();
             if (basket.ContainAnotherWholeIEumable(Scope)) {

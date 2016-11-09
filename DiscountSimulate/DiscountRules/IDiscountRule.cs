@@ -10,6 +10,6 @@ namespace DiscountSimulate
     {
         List<Product> Scope { get; set; }
 
-        List<Discount> GetDiscountColl(List<Product> basket);
+        List<Discount> GetDiscounts(List<Product> basket);
     }
 }
