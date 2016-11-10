@@ -37,7 +37,7 @@ namespace DiscountSimulate
             basket = AddNumsOfProductToBasket(basket, pE, 2);
             basket = AddNumsOfProductToBasket(basket, pF, 3);
             basket = AddNumsOfProductToBasket(basket, pG, 1);
-            //basket = AddNumsOfProductToBasket(basket, pH, 2);
+            basket = AddNumsOfProductToBasket(basket, pH, 2);
             //basket = AddNumsOfProductToBasket(basket, pI, 3);
             //basket = AddNumsOfProductToBasket(basket, pJ, 1);
             //basket = AddNumsOfProductToBasket(basket, pK, 2);
@@ -72,7 +72,7 @@ namespace DiscountSimulate
             vaildDiscounts.AddRange(new List<Discount> { dABC, dAB, dBC, dAC, dBD, dACD, dCD });
             vaildDiscounts.AddRange(new List<Discount> { d2A, d3B, d2CD });
             #endregion
-            /*
+
             List<IDiscountRule> discountRules = new List<IDiscountRule>();
             discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pI, pK }));
             discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pG, pH, pJ }));
@@ -99,15 +99,16 @@ namespace DiscountSimulate
             discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pF, pG }, 160));
-
+            /*
             List<Discount> vaildDiscounts = new List<Discount>();
             foreach (var rule in discountRules) {
                 vaildDiscounts.AddRange(rule.GetDiscounts(basket));
-            }
-            */
+            }*/
+
             var strategyA = EvalEachBestProfit(basket.Clone().ToList(), vaildDiscounts.Clone().ToList());
             var strategyB = EvalBestProfit(basket.Clone().ToList(), vaildDiscounts.Clone().ToList());
             var strategyC = GetBestDiscountPath(basket.Clone().ToList(), vaildDiscounts.Clone().ToList());
+            var strategyD = EvalEachBestDiscountTree(basket.Clone().ToList(), vaildDiscounts.Clone().ToList());
         }
 
         private static List<Discount> EvalEachBestProfit(List<Product> pColl, List<Discount> dColl)
@@ -176,6 +177,81 @@ namespace DiscountSimulate
             }
 
             return bestDiscColl;
+        }
+
+        private static List<Discount> EvalEachBestDiscountTree(List<Product> products, List<Discount> discounts)
+        {
+            List<Discount> bestDiscountPath = new List<Discount>();
+            List<Discount> unEvalDiscounts = discounts.Clone().ToList();
+            List<List<Discount>> bestDiscountCandidates = new List<List<Discount>>();
+
+            foreach (var currProduct in products) {
+                var discountsHasCurrProduct = discounts.Where(d => d.Combination.Any(ele => ele.Name == currProduct.Name));
+                if (discountsHasCurrProduct.Any()) {
+                    Discount currBest = discountsHasCurrProduct.First();
+                    foreach (var d in discountsHasCurrProduct) {
+                        if (d.Distribution >= currBest.Distribution) {
+                            currBest = d;
+                        }
+                    }
+                    var bestDiscountPathThisLoop = GetDerivativePath(currBest, products, discounts);
+                    bestDiscountCandidates.Add(bestDiscountPathThisLoop);
+                }
+            }
+
+            var performanceSet = bestDiscountCandidates.Select(
+                path => new
+                {
+                    DiscountPath = path,
+                    TotalDiscountAmount = path.Sum(d => d.Amount)
+                });
+
+            bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
+
+            return bestDiscountPath;
+        }
+
+        private static List<Discount> GetDerivativePath(Discount root, List<Product> products, List<Discount> discounts)
+        {
+            List<Discount> derivativePath = new List<Discount>();
+
+            var copyOfProducts = products.Clone().ToList();
+            var copyOfDiscounts = discounts.Clone().ToList();
+
+            derivativePath.Add(root);
+            // 因為同商品可能有複數個所以不能用 Where，要迴圈砍
+            foreach (var element in root.Combination) {
+                copyOfProducts.Remove(copyOfProducts.FirstOrDefault(p => p.Name == element.Name));
+            }
+            copyOfDiscounts = ValidateDiscounts(copyOfProducts, copyOfDiscounts);
+
+            while (copyOfProducts.Any() && copyOfDiscounts.Any()) {
+                List<Discount> bestDiscountsOfEachProduct = new List<Discount>();
+                foreach (var currProduct in copyOfProducts) {
+                    var discountsHasCurrProduct = copyOfDiscounts.Where(d => d.Combination.Any(ele => ele.Name == currProduct.Name));
+                    if (discountsHasCurrProduct.Any()) {
+                        Discount currBest = discountsHasCurrProduct.First();
+                        foreach (var d in discountsHasCurrProduct) {
+                            if (d.Distribution >= currBest.Distribution) {
+                                currBest = d;
+                            }
+                        }
+                        bestDiscountsOfEachProduct.Add(currBest);
+                    }
+                }
+                // 本輪最佳折扣
+                var bestDiscountThisLoop = bestDiscountsOfEachProduct.OrderByDescending(ele => ele.Amount).FirstOrDefault();
+                derivativePath.Add(bestDiscountThisLoop);
+
+                // 移除本輪已耗用的商品組合
+                foreach (var element in bestDiscountThisLoop.Combination) {
+                    copyOfProducts.Remove(copyOfProducts.FirstOrDefault(p => p.Name == element.Name));
+                }
+
+                copyOfDiscounts = ValidateDiscounts(copyOfProducts, copyOfDiscounts);
+            }
+
+            return derivativePath;
         }
 
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
