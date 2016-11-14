@@ -32,13 +32,15 @@ namespace DiscountSimulate
 
         static void Main(string[] args)
         {
-            UseLadData1();
+            UseLadData2();
+            _discounts = _discounts.OrderBy(d => d.Amount).ToList();
 
             Stopwatch sw = new Stopwatch();
             sw.Reset();
 
             sw.Start();
             var strategyA = EvalBestDiscount(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalA = strategyA.Sum(a => a.Amount);
             sw.Stop();
             TimeSpan timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
             string cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
@@ -46,6 +48,7 @@ namespace DiscountSimulate
 
             sw.Restart();
             var strategyB = EvalBestDistributionDiscount(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalB = strategyB.Sum(b => b.Amount);
             sw.Stop();
             timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
@@ -53,6 +56,7 @@ namespace DiscountSimulate
 
             sw.Restart();
             var strategyC = ExpanseAllDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalC = strategyC.Sum(c => c.Amount);
             sw.Stop();
             timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
@@ -60,6 +64,7 @@ namespace DiscountSimulate
 
             sw.Restart();
             var strategyC2 = ExpansePrunedDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalC2 = strategyC2.Sum(c2 => c2.Amount);
             sw.Stop();
             timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
@@ -67,6 +72,7 @@ namespace DiscountSimulate
 
             sw.Restart();
             var strategyD = ExpanseBestDistributionDiscountTree(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalD = strategyD.Sum(d => d.Amount);
             sw.Stop();
             timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
@@ -78,7 +84,7 @@ namespace DiscountSimulate
         private static void UseLadData1()
         {
             //_basket = new List<Product> { pA, pB, pC, pD };
-            _basket = new List<Product> { pA, pB, pC, pA, pB, pC, pD };
+            _basket = new List<Product> { pA, pB, pC, pA, pB, pC, pD, pA, pA, pA };
 
             Discount dA = new Discount { Name = "dA", Amount = 50, Combination = new List<Product> { pA } };
             Discount dAp75 = new Discount { Name = "dAp75", Amount = pA.Price * 0.25, Combination = new List<Product> { pA } };
@@ -115,7 +121,7 @@ namespace DiscountSimulate
             _basket = AddNumsOfProductToBasket(_basket, pD, 1);
             _basket = AddNumsOfProductToBasket(_basket, pE, 2);
             _basket = AddNumsOfProductToBasket(_basket, pF, 3);
-            _basket = AddNumsOfProductToBasket(_basket, pG, 1);
+            //_basket = AddNumsOfProductToBasket(_basket, pG, 1);
             //_basket = AddNumsOfProductToBasket(_basket, pH, 2);
             //_basket = AddNumsOfProductToBasket(_basket, pI, 3);
             //_basket = AddNumsOfProductToBasket(_basket, pJ, 1);
@@ -166,7 +172,9 @@ namespace DiscountSimulate
             return basket;
         }
 
-        /// <summary>移除折扣耗用的商品</summary>
+        /// <summary>移除耗用的商品</summary>
+        /// <param name="availableProducts"></param>
+        /// <param name="usedDiscount"></param>
         /// <returns></returns>
         private static List<Product> RemoveUsedProducts(List<Product> availableProducts, Discount usedDiscount)
         {
@@ -456,7 +464,7 @@ namespace DiscountSimulate
         /// <param name="availableDiscounts"></param>
         /// <param name="currPath"></param>
         /// <param name="discountPaths"></param>
-        private static void ExpanseRecursively(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, List<List<Discount>> discountPaths)
+        private static void ExpanseRecursively(List<Product> availableProducts, List<Discount> availableDiscounts, List<Discount> currPath, Dictionary<string, List<Discount>> discountPaths)
         {
             if (availableProducts.Any() && availableDiscounts.Any()) {
                 var vaildDiscountColl = ValidateDiscounts(availableProducts, availableDiscounts);
@@ -468,11 +476,13 @@ namespace DiscountSimulate
                 }
 
                 if (!vaildDiscountColl.Any()) {
-                    discountPaths.Add(currPath);
+                    currPath = currPath.OrderBy(p => p.Name).ToList();
+                    discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
                 }
             }
             else {
-                discountPaths.Add(currPath);
+                currPath = currPath.OrderBy(p => p.Name).ToList();
+                discountPaths[string.Join("-", currPath.Select(p => p.Name))] = currPath;
             }
         }
 
@@ -482,7 +492,7 @@ namespace DiscountSimulate
         /// <returns></returns>
         private static List<Discount> ExpanseAllDiscountPaths(List<Product> avaliableProducts, List<Discount> availableDiscounts)
         {
-            List<List<Discount>> discountPaths = new List<List<Discount>>();
+            Dictionary<string, List<Discount>> discountPaths = new Dictionary<string, List<Discount>>();
             List<Discount> bestDiscountPath = new List<Discount>();
 
             var vaildDiscounts = ValidateDiscounts(avaliableProducts, availableDiscounts);
@@ -495,8 +505,8 @@ namespace DiscountSimulate
 
             var performanceSet = discountPaths.Select(dp => new
             {
-                DiscountPath = dp,
-                TotalDiscountAmount = dp.Sum(d => d.Amount)
+                DiscountPath = dp.Value,
+                TotalDiscountAmount = dp.Value.Sum(d => d.Amount)
             });
 
             bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
