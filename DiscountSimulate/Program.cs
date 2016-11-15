@@ -32,7 +32,7 @@ namespace DiscountSimulate
 
         static void Main(string[] args)
         {
-            UseLadData2();
+            UseLadData5();
             _discounts = _discounts.OrderBy(d => d.Amount).ToList();
 
             Stopwatch sw = new Stopwatch();
@@ -115,43 +115,43 @@ namespace DiscountSimulate
         private static void UseLadData2()
         {
             _basket = new List<Product> { pA, pB, pC, pC, pC };
-            //_basket = AddNumsOfProductToBasket(_basket, pA, 5);
-            //_basket = AddNumsOfProductToBasket(_basket, pB, 6);
-            //_basket = AddNumsOfProductToBasket(_basket, pC, 7);
+            _basket = AddNumsOfProductToBasket(_basket, pA, 95);
+            _basket = AddNumsOfProductToBasket(_basket, pB, 6);
+            _basket = AddNumsOfProductToBasket(_basket, pC, 95);
             _basket = AddNumsOfProductToBasket(_basket, pD, 1);
             _basket = AddNumsOfProductToBasket(_basket, pE, 2);
             _basket = AddNumsOfProductToBasket(_basket, pF, 3);
-            //_basket = AddNumsOfProductToBasket(_basket, pG, 1);
-            //_basket = AddNumsOfProductToBasket(_basket, pH, 2);
-            //_basket = AddNumsOfProductToBasket(_basket, pI, 3);
-            //_basket = AddNumsOfProductToBasket(_basket, pJ, 1);
-            //_basket = AddNumsOfProductToBasket(_basket, pK, 2);
-            //_basket = AddNumsOfProductToBasket(_basket, pAA, 55);
-            //_basket = AddNumsOfProductToBasket(_basket, pBB, 78);
-            //_basket = AddNumsOfProductToBasket(_basket, pCC, 87);
+            _basket = AddNumsOfProductToBasket(_basket, pG, 1);
+            _basket = AddNumsOfProductToBasket(_basket, pH, 2);
+            _basket = AddNumsOfProductToBasket(_basket, pI, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pJ, 1);
+            _basket = AddNumsOfProductToBasket(_basket, pK, 2);
+            _basket = AddNumsOfProductToBasket(_basket, pAA, 15);
+            _basket = AddNumsOfProductToBasket(_basket, pBB, 18);
+            _basket = AddNumsOfProductToBasket(_basket, pCC, 17);
 
             List<IDiscountRule> discountRules = new List<IDiscountRule>();
             discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pI, pK }));
             discountRules.Add(new SingleProductFixedAmountDiscount(6, new List<Product> { pB, pD, pF, pG, pH, pJ }));
             discountRules.Add(new SingleProductPercentDiscount(0.96, new List<Product> { pI, pJ, pK }));
-            //discountRules.Add(new BuyOneGetOneFree(new List<Product> { pG }));
+            discountRules.Add(new BuyOneGetOneFree(new List<Product> { pG }));
             discountRules.Add(new BuyTwoGetOneFree(new List<Product> { pC }));
-            //discountRules.Add(new FreeUpdate(pA, pAA));
-            //discountRules.Add(new FreeUpdate(pB, pBB));
-            //discountRules.Add(new FreeUpdate(pC, pCC));
-            ////discountRules.Add(new BuyAGetBFree(pI, pJ));
-            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pA, pB }, 0.75));
-            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pA, pB }, 200));
-            //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB }, 5));
-            //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
-            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pB, pD }, 250));
-            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pB, pC, pD }, 0.65));
+            discountRules.Add(new FreeUpdate(pA, pAA));
+            discountRules.Add(new FreeUpdate(pB, pBB));
+            discountRules.Add(new FreeUpdate(pC, pCC));
+            discountRules.Add(new BuyAGetBFree(pI, pJ));
+            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pA, pB }, 0.75));
+            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pA, pB }, 200));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB }, 5));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
+            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pA, pB, pD }, 250));
+            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pB, pC, pD }, 0.65));
 
-            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD }, 0.7));
-            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pI, pJ, pH }, 200));
-            //discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pG, pAA }, 105));
-            //discountRules.Add(new MultiProductFixedPrice(new List<Product> { pE, pH }, 120));
-            //discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pF, pH, pK }, 0.95));
+            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD }, 0.7));
+            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pI, pJ, pH }, 200));
+            discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pG, pAA }, 105));
+            discountRules.Add(new MultiProductFixedPrice(new List<Product> { pE, pH }, 120));
+            discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pF, pH, pK }, 0.95));
 
             discountRules.Add(new MultiProductPercentDiscount(new List<Product> { pC, pD, pE }, 0.75));
             discountRules.Add(new MultiProductFixedAmountDiscount(new List<Product> { pA, pB, pC }, 120));
@@ -161,6 +161,46 @@ namespace DiscountSimulate
             foreach (var rule in discountRules) {
                 _discounts.AddRange(rule.GetDiscounts(_basket));
             }
+        }
+
+        private static void UseLadData3()
+        {
+            // 可以讓 strategy A, B 都錯的 case
+
+            _basket = new List<Product> { pA, pB, pC, pD, pE, pF, pG, pH, pI, pJ };
+
+            Discount dAB = new Discount { Name = "dAB", Amount = 60, Combination = new List<Product> { pA, pB } };
+            Discount dCD = new Discount { Name = "dCD", Amount = 60, Combination = new List<Product> { pC, pD } };
+            Discount dABCDE = new Discount { Name = "dABCDE", Amount = 100, Combination = new List<Product> { pA, pB, pC, pD, pE } };
+            Discount dFG = new Discount { Name = "dFG", Amount = 45, Combination = new List<Product> { pF, pG } };
+            Discount dHI = new Discount { Name = "dHI", Amount = 45, Combination = new List<Product> { pH, pI } };
+            Discount dFGHIJ = new Discount { Name = "dFGHIJ", Amount = 100, Combination = new List<Product> { pF, pG, pH, pI, pJ } };
+
+            _discounts.AddRange(new List<Discount> { dAB, dCD, dABCDE, dFG, dHI, dFGHIJ });
+        }
+
+        private static void UseLadData4()
+        {
+            _basket = new List<Product> { pA, pB, pC, pD, pA, pA };
+
+            Discount dAB = new Discount { Name = "dAB", Amount = 14, Combination = new List<Product> { pA, pB } };
+            Discount dAA = new Discount { Name = "dAA", Amount = 10, Combination = new List<Product> { pA, pA } };
+            Discount dAC = new Discount { Name = "dAC", Amount = 20, Combination = new List<Product> { pA, pC } };
+            Discount dBD = new Discount { Name = "dBD", Amount = 15, Combination = new List<Product> { pB, pD } };
+            Discount dD = new Discount { Name = "dD", Amount = 12, Combination = new List<Product> { pD } };
+
+            _discounts.AddRange(new List<Discount> { dAB, dAA, dAC, dBD, dD });
+        }
+
+        private static void UseLadData5()
+        {
+            _basket = new List<Product> { pA, pB, pC, pB, pC, pB, pC };
+
+            Discount dAB = new Discount { Name = "dAB", Amount = 10, Combination = new List<Product> { pA, pB } };
+            Discount dBC = new Discount { Name = "dBC", Amount = 9, Combination = new List<Product> { pB, pD } };
+            Discount dBCBCBC = new Discount { Name = "dBCBCBC", Amount = 29, Combination = new List<Product> { pB, pC, pB, pC, pB, pC } };
+
+            _discounts.AddRange(new List<Discount> { dAB, dBC, dBCBCBC });
         }
 
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
