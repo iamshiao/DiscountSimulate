@@ -32,7 +32,7 @@ namespace DiscountSimulate
 
         static void Main(string[] args)
         {
-            UseLadData5();
+            UseLadData7();
             _discounts = _discounts.OrderBy(d => d.Amount).ToList();
 
             Stopwatch sw = new Stopwatch();
@@ -78,6 +78,14 @@ namespace DiscountSimulate
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
             Console.WriteLine($"strategyD: {cost}");
 
+            sw.Restart();
+            var strategyE = ExpanseEliteDiscountTree(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalE = strategyE.Sum(e => e.Amount);
+            sw.Stop();
+            timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
+            Console.WriteLine($"strategyE: {cost}");
+
             Console.ReadLine();
         }
 
@@ -114,21 +122,21 @@ namespace DiscountSimulate
 
         private static void UseLadData2()
         {
-            _basket = new List<Product> { pA, pB, pC, pC, pC };
-            _basket = AddNumsOfProductToBasket(_basket, pA, 95);
-            _basket = AddNumsOfProductToBasket(_basket, pB, 6);
-            _basket = AddNumsOfProductToBasket(_basket, pC, 95);
-            _basket = AddNumsOfProductToBasket(_basket, pD, 1);
-            _basket = AddNumsOfProductToBasket(_basket, pE, 2);
+            _basket = new List<Product>();
+            _basket = AddNumsOfProductToBasket(_basket, pA, 99);
+            _basket = AddNumsOfProductToBasket(_basket, pB, 99);
+            _basket = AddNumsOfProductToBasket(_basket, pC, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pD, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pE, 3);
             _basket = AddNumsOfProductToBasket(_basket, pF, 3);
-            _basket = AddNumsOfProductToBasket(_basket, pG, 1);
-            _basket = AddNumsOfProductToBasket(_basket, pH, 2);
+            _basket = AddNumsOfProductToBasket(_basket, pG, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pH, 3);
             _basket = AddNumsOfProductToBasket(_basket, pI, 3);
-            _basket = AddNumsOfProductToBasket(_basket, pJ, 1);
-            _basket = AddNumsOfProductToBasket(_basket, pK, 2);
-            _basket = AddNumsOfProductToBasket(_basket, pAA, 15);
-            _basket = AddNumsOfProductToBasket(_basket, pBB, 18);
-            _basket = AddNumsOfProductToBasket(_basket, pCC, 17);
+            _basket = AddNumsOfProductToBasket(_basket, pJ, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pK, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pAA, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pBB, 3);
+            _basket = AddNumsOfProductToBasket(_basket, pCC, 3);
 
             List<IDiscountRule> discountRules = new List<IDiscountRule>();
             discountRules.Add(new SingleProductSpecialPrice(95, new List<Product> { pA, pC, pE, pI, pK }));
@@ -201,6 +209,28 @@ namespace DiscountSimulate
             Discount dBCBCBC = new Discount { Name = "dBCBCBC", Amount = 29, Combination = new List<Product> { pB, pC, pB, pC, pB, pC } };
 
             _discounts.AddRange(new List<Discount> { dAB, dBC, dBCBCBC });
+        }
+
+        private static void UseLadData6()
+        {
+            _basket = new List<Product> { pA, pB, pC, pB, pC, pB, pC };
+
+            Discount dAB = new Discount { Name = "dAB", Amount = 10, Combination = new List<Product> { pA, pB } };
+            Discount dBC = new Discount { Name = "dBC", Amount = 9, Combination = new List<Product> { pB, pC } };
+            Discount dBCBCBC = new Discount { Name = "dBCBCBC", Amount = 27, Combination = new List<Product> { pB, pC, pB, pC, pB, pC } };
+
+            _discounts.AddRange(new List<Discount> { dAB, dBC, dBCBCBC });
+        }
+
+        private static void UseLadData7()
+        {
+            _basket = new List<Product> { pA, pB, pC, pD, pD, pD, pD };
+
+            Discount dAB = new Discount { Name = "dAB", Amount = 10, Combination = new List<Product> { pA, pB } };
+            Discount dBC = new Discount { Name = "dBC", Amount = 8, Combination = new List<Product> { pB, pC } };
+            Discount dBDDDD = new Discount { Name = "dBDDDD", Amount = 16, Combination = new List<Product> { pB, pD, pD, pD, pD } };
+
+            _discounts.AddRange(new List<Discount> { dAB, dBC, dBDDDD });
         }
 
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
@@ -299,6 +329,44 @@ namespace DiscountSimulate
             }
 
             return bestDiscounts;
+        }
+
+        private static List<Discount> ExpanseEliteDiscountTree(List<Product> products, List<Discount> discounts)
+        {
+            List<Discount> bestDiscountPath = new List<Discount>();
+            List<List<Discount>> discountPaths = new List<List<Discount>>();
+
+            List<Discount> productBestDiscount = new List<Discount>();
+            foreach (var currProduct in products) {
+                var currProductDiscounts = discounts.Where(d => d.Combination.Any(ele => ele.Name == currProduct.Name));
+                if (currProductDiscounts.Any()) {
+                    Discount currBest = currProductDiscounts.First();
+                    foreach (var d in currProductDiscounts) {
+                        if (d.Distribution >= currBest.Distribution) {
+                            currBest = d;
+                        }
+                    }
+                    if (!productBestDiscount.Any(d => d.Name == currBest.Name)) {
+                        productBestDiscount.Add(currBest);
+                    }
+                }
+            }
+
+            foreach (var discount in productBestDiscount.OrderByDescending(d => d.Distribution).Take(2)) {
+                var bestDiscountPathThisLoop = GetDerivativePath(discount, products, discounts);
+                discountPaths.Add(bestDiscountPathThisLoop);
+            }
+
+            var performanceSet = discountPaths.Select(
+                path => new
+                {
+                    DiscountPath = path,
+                    TotalDiscountAmount = path.Sum(d => d.Amount)
+                });
+
+            bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
+
+            return bestDiscountPath;
         }
 
         /// <summary>以各商品最大分配折扣額為基準的擴展樹</summary>
