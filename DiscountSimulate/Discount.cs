@@ -16,6 +16,17 @@ namespace DiscountSimulate
 
         public double Distribution { get { return Amount / Combination.Count; } }
 
+        public double HowStarving { get { return GetStarvingVal(); } }
+
+        private double GetStarvingVal()
+        {
+            double starvingVal = 1;
+            foreach (var p in Combination) {
+                starvingVal *= p.StarveRate;
+            }
+            return Amount * starvingVal;
+        }
+
         public object Clone()
         {
             Discount discount = (Discount)this.MemberwiseClone();

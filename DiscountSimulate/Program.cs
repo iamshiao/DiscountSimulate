@@ -32,8 +32,10 @@ namespace DiscountSimulate
 
         static void Main(string[] args)
         {
-            UseLadData2();
+            UseLadData1();
             _discounts = _discounts.OrderBy(d => d.Amount).ToList();
+
+            HowStarvingProductsAre(_basket, _discounts);
 
             Stopwatch sw = new Stopwatch();
             sw.Reset();
@@ -54,21 +56,21 @@ namespace DiscountSimulate
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
             Console.WriteLine($"strategyB: {cost}");
 
-            //sw.Restart();
-            //var strategyC = ExpanseAllDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
-            //double totalC = strategyC.Sum(c => c.Amount);
-            //sw.Stop();
-            //timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
-            //cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
-            //Console.WriteLine($"strategyC: {cost}");
+            sw.Restart();
+            var strategyC = ExpanseAllDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalC = strategyC.Sum(c => c.Amount);
+            sw.Stop();
+            timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
+            Console.WriteLine($"strategyC: {cost}");
 
-            //sw.Restart();
-            //var strategyC2 = ExpansePrunedDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
-            //double totalC2 = strategyC2.Sum(c2 => c2.Amount);
-            //sw.Stop();
-            //timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
-            //cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
-            //Console.WriteLine($"strategyC2: {cost}");
+            sw.Restart();
+            var strategyC2 = ExpansePrunedDiscountPaths(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalC2 = strategyC2.Sum(c2 => c2.Amount);
+            sw.Stop();
+            timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
+            Console.WriteLine($"strategyC2: {cost}");
 
             sw.Restart();
             var strategyD = ExpanseBestDistributionDiscountTree(_basket.Clone().ToList(), _discounts.Clone().ToList());
@@ -86,13 +88,13 @@ namespace DiscountSimulate
             cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
             Console.WriteLine($"strategyE: {cost}");
 
-            //sw.Restart();
-            //var strategyF = ExpanseEliteDiscountTree2(_basket.Clone().ToList(), _discounts.Clone().ToList());
-            //double totalF = strategyF.Sum(f => f.Amount);
-            //sw.Stop();
-            //timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
-            //cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
-            //Console.WriteLine($"strategyF: {cost}");
+            sw.Restart();
+            var strategyF = ExpanseStarvestDiscountTree(_basket.Clone().ToList(), _discounts.Clone().ToList());
+            double totalF = strategyF.Sum(f => f.Amount);
+            sw.Stop();
+            timeSpan = TimeSpan.FromMilliseconds(sw.ElapsedMilliseconds);
+            cost = $"{timeSpan.Hours}h-{timeSpan.Minutes}m-{timeSpan.Seconds}s-{timeSpan.Milliseconds}ms";
+            Console.WriteLine($"strategyF: {cost}");
 
             Console.ReadLine();
         }
@@ -254,6 +256,19 @@ namespace DiscountSimulate
             _discounts.AddRange(new List<Discount> { dAA, dAB, dBBC, dBDD, dCC });
         }
 
+        private static void UseLadData9()
+        {
+            _basket = new List<Product> { pA, pA, pB, pB, pB, pB, pC, pC, pC, pC, pD, pD, pD, pD, pD, pD, pD, pD };
+
+            Discount dAA = new Discount { Name = "dAA", Amount = 9, Combination = new List<Product> { pA, pA } };
+            Discount dAB = new Discount { Name = "dAB", Amount = 10, Combination = new List<Product> { pA, pB } };
+            Discount dBBC = new Discount { Name = "dBBC", Amount = 18, Combination = new List<Product> { pB, pB, pC } };
+            Discount dBDDC = new Discount { Name = "dBDDC", Amount = 16, Combination = new List<Product> { pB, pD, pD, pC } };
+            Discount dCC = new Discount { Name = "dCC", Amount = 9, Combination = new List<Product> { pC, pC } };
+
+            _discounts.AddRange(new List<Discount> { dAA, dAB, dBBC, dBDDC, dCC });
+        }
+
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
         {
             for (int i = 0; i < num; i++) {
@@ -278,6 +293,29 @@ namespace DiscountSimulate
                 }
             }
             return availableProducts;
+        }
+
+        private static void HowStarvingProductsAre(List<Product> products, List<Discount> discounts)
+        {
+            Dictionary<string, double> productsStarvingRate = new Dictionary<string, double>();
+            var groupCountProducts = products.GroupBy(x => x.Name)
+                    .Select(group => new
+                    {
+                        Name = group.Key,
+                        Count = group.Count()
+                    });
+
+            foreach (var p in products.DistinctBy(p => p.Name)) {
+                var currProductDiscounts = discounts.Where(d => d.Combination.Any(ele => ele.Name == p.Name));
+                double starvingRate =
+                    (double)discounts.Count() / (double)currProductDiscounts.Count() *
+                    (double)groupCountProducts.First(x => x.Name == p.Name).Count / (double)products.Count();
+                productsStarvingRate.Add(p.Name, starvingRate);
+            }
+
+            foreach (var p in products) {
+                p.StarveRate = productsStarvingRate[p.Name];
+            }
         }
 
         /// <summary>找出依商品最大折扣排列選出的折扣組合</summary>
@@ -388,6 +426,78 @@ namespace DiscountSimulate
             bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
 
             return bestDiscountPath;
+        }
+
+        private static List<Discount> ExpanseStarvestDiscountTree(List<Product> products, List<Discount> discounts)
+        {
+            List<Discount> bestDiscountPath = new List<Discount>();
+            List<List<Discount>> discountPaths = new List<List<Discount>>();
+
+            foreach (var currProduct in products.DistinctBy(p => p.Name)) {
+                var currProductDiscounts = discounts.Where(d => d.Combination.Any(ele => ele.Name == currProduct.Name));
+                if (currProductDiscounts.Any()) {
+                    Discount currBest = currProductDiscounts.First();
+                    foreach (var d in currProductDiscounts) {
+                        if (d.HowStarving >= currBest.HowStarving) {
+                            currBest = d;
+                        }
+                    }
+                    var bestDiscountPathThisLoop = GetDerivativePathByHowStarving(currBest, products, discounts);
+                    discountPaths.Add(bestDiscountPathThisLoop);
+                }
+            }
+
+            var performanceSet = discountPaths.Select(
+                path => new
+                {
+                    DiscountPath = path,
+                    TotalDiscountAmount = path.Sum(d => d.Amount)
+                });
+
+            bestDiscountPath = performanceSet.OrderByDescending(x => x.TotalDiscountAmount).First().DiscountPath.OrderByDescending(x => x.Amount).ToList();
+
+            return bestDiscountPath;
+        }
+
+        private static List<Discount> GetDerivativePathByHowStarving(Discount root, List<Product> products, List<Discount> discounts)
+        {
+            List<Discount> derivativePath = new List<Discount>();
+
+            var copyOfProducts = products.Clone().ToList();
+            var copyOfDiscounts = discounts.Clone().ToList();
+
+            derivativePath.Add(root);
+            // 因為同商品可能有複數個所以不能用 Where，要迴圈砍
+            foreach (var element in root.Combination) {
+                copyOfProducts.Remove(copyOfProducts.FirstOrDefault(p => p.Name == element.Name));
+            }
+            copyOfDiscounts = ValidateDiscounts(copyOfProducts, copyOfDiscounts);
+
+            while (copyOfProducts.Any() && copyOfDiscounts.Any()) {
+                List<Discount> bestDiscountsOfEachProduct = new List<Discount>();
+                foreach (var currProduct in copyOfProducts) {
+                    var currProductDiscounts = copyOfDiscounts.Where(d => d.Combination.Any(ele => ele.Name == currProduct.Name));
+                    if (currProductDiscounts.Any()) {
+                        Discount currBest = currProductDiscounts.First();
+                        foreach (var d in currProductDiscounts) {
+                            if (d.HowStarving >= currBest.HowStarving) {
+                                currBest = d;
+                            }
+                        }
+                        bestDiscountsOfEachProduct.Add(currBest);
+                    }
+                }
+                var bestDiscountThisLoop = bestDiscountsOfEachProduct.OrderByDescending(ele => ele.HowStarving).FirstOrDefault();
+                derivativePath.Add(bestDiscountThisLoop);
+
+                foreach (var element in bestDiscountThisLoop.Combination) {
+                    copyOfProducts.Remove(copyOfProducts.FirstOrDefault(p => p.Name == element.Name));
+                }
+
+                copyOfDiscounts = ValidateDiscounts(copyOfProducts, copyOfDiscounts);
+            }
+
+            return derivativePath;
         }
 
         /// <summary>以各商品最大分配折扣額為基準的擴展樹</summary>
