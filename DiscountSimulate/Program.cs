@@ -32,7 +32,7 @@ namespace DiscountSimulate
 
         static void Main(string[] args)
         {
-            UseLadData1();
+            UseLadData10();
             _discounts = _discounts.OrderBy(d => d.Amount).ToList();
 
             HowStarvingProductsAre(_basket, _discounts);
@@ -267,6 +267,26 @@ namespace DiscountSimulate
             Discount dCC = new Discount { Name = "dCC", Amount = 9, Combination = new List<Product> { pC, pC } };
 
             _discounts.AddRange(new List<Discount> { dAA, dAB, dBBC, dBDDC, dCC });
+        }
+
+        private static void UseLadData10()
+        {
+            _basket = new List<Product> { pA, pA, pB, pB, pB, pB, pC, pC, pC, pC, pD, pD, pD, pD, pD, pD, pD, pD
+                ,pE, pF, pF, pG, pG, pG, pG,
+            };
+
+            Discount dAA = new Discount { Name = "dAA", Amount = 9, Combination = new List<Product> { pA, pA } };
+            Discount dAB = new Discount { Name = "dAB", Amount = 10, Combination = new List<Product> { pA, pB } };
+            Discount dBBC = new Discount { Name = "dBBC", Amount = 18, Combination = new List<Product> { pB, pB, pC } };
+            Discount dBDDC = new Discount { Name = "dBDDC", Amount = 16, Combination = new List<Product> { pB, pD, pD, pC } };
+            Discount dCC = new Discount { Name = "dCC", Amount = 9, Combination = new List<Product> { pC, pC } };
+            _discounts.AddRange(new List<Discount> { dAA, dAB, dBBC, dBDDC, dCC });
+
+            Discount dFG = new Discount { Name = "dFG", Amount = 13, Combination = new List<Product> { pF, pG } };
+            Discount dEF = new Discount { Name = "dEF", Amount = 10, Combination = new List<Product> { pE, pF } };
+            Discount dFGG = new Discount { Name = "dFGG", Amount = 21, Combination = new List<Product> { pF, pG, pG } };
+            Discount dEG = new Discount { Name = "dEG", Amount = 12, Combination = new List<Product> { pE, pG } };
+            _discounts.AddRange(new List<Discount> { dFG, dFGG, dEG });
         }
 
         private static List<Product> AddNumsOfProductToBasket(List<Product> basket, Product p, int num)
